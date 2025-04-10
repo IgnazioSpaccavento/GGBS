@@ -1,0 +1,21 @@
+services:
+
+  graphaligner:
+    stdin_open: true 
+    tty: true
+    build:
+      context: ./
+      dockerfile: Dockerfiles/GraphAligner/Dockerfile
+    volumes:
+      - type: bind
+        source: ./results	
+        target: /GraphAligner/results
+      - type: bind
+        source: ./input_data	
+        target: /GraphAligner/input_data
+    command:
+      - /bin/bash 
+      - -c
+      - |
+        apt-get update && apt-get install -y time; 
+        /usr/bin/time -f "Time: %e %E, MAX Memory: %M KB" GraphAligner -g ./input_data/TEST/MHC/GRAPH/f_MHC-57.gfa -f ./input_data/TEST/MHC/READS/FASTA/f_MHC-57_reads.fa -a ./results/2025_04_10_23_39_49/GraphAligner/MHC/f_MHC-57_alignments.gaf -x vg -t 32 --seeds-minimizer-length 29 --seeds-minimizer-windowsize 15 --seeds-minimizer-density 4 > /dev/null 2> ./results/2025_04_10_23_39_49/GraphAligner/MHC/f_MHC-57_time.log

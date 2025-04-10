@@ -3,10 +3,10 @@ import yaml
 from pathlib import Path
 from datetime import datetime
 
-N_THREADS = 8
+N_THREADS = 32
 
+#version: 3.2 		dovrebbe essere nell'header ma ora non è necessario specificare la versione
 DOCKER_COMPOSE_HEADER = '''\
-version: '3.2'
 services:
 '''
 
@@ -36,7 +36,8 @@ COMMAND_TEMPLATE = '        {TIME_MEM} {COMMAND} {LOG} 2> {TIMING}\n'
 TIME_MEM = '/usr/bin/time -f "Time: %e %E, MAX Memory: %M KB"'
 
 COMMANDS = {
-	'GraphAligner': 'GraphAligner -g {GRAPH} -f {READS} -a {OUTPUT} -x vg -t {THREADS}',
+	'GraphAligner': 'GraphAligner -g {GRAPH} -f {READS} -a {OUTPUT} -x vg -t {THREADS} --seeds-minimizer-length 29 --seeds-minimizer-windowsize 15 --seeds-minimizer-density 4',
+ 	#'GraphAligner': 'GraphAligner -g {GRAPH} -f {READS} -a {OUTPUT} -x vg -t {THREADS}',
 	'astarix': 'release/astarix align-optimal -a astar-seeds -g {GRAPH} -q {READS} -t {THREADS} --fixed_trie_depth 1 --seeds_len 10 -G 1 -v 1 -o {OUT_DIR}',
 	'gwfa': './gwf-test {GRAPH} {READS}',
 	'SGA': './apps/sga_example {GRAPH} {READS}',
@@ -61,7 +62,11 @@ def main():
 
 	# Retrieve the alignments to be executed from INPUT_DATA/TEST
 	DATA_FOLDER = os.path.join('./', 'input_data', 'TEST')
-	ALIGNMENTS = [f for f in os.listdir(DATA_FOLDER)]
+	all_alignments = [f for f in os.listdir(DATA_FOLDER)]
+	
+	#Exclude some experiment
+	EXCLUDED_EXPERIMENTS = ['C4', 'ebola', 'covid', 'yeast']
+	ALIGNMENTS = [align for align in all_alignments if not any(excluded in align for excluded in EXCLUDED_EXPERIMENTS)]
 
 	# Set the results (output) folder
 	RESULTS = os.path.join('./', 'results')
@@ -113,10 +118,10 @@ def main():
 				(f.lower().endswith('.fa') or f.lower().endswith('.fq') or 
 				f.lower().endswith('.fasta') or f.lower().endswith('fastq'))][0]
 			reads_path_fa = os.path.join(dir_tmp, 'READS/FASTA', reads_fa)
-			reads_fq = [f for f in os.listdir(os.path.join(dir_tmp, 'READS/FASTQ')) if 
-				(f.lower().endswith('.fa') or f.lower().endswith('.fq') or 
-				f.lower().endswith('.fasta') or f.lower().endswith('fastq'))][0]
-			reads_path_fq = os.path.join(dir_tmp, 'READS/FASTQ', reads_fq)
+			#reads_fq = [f for f in os.listdir(os.path.join(dir_tmp, 'READS/FASTQ')) if 
+			#	(f.lower().endswith('.fa') or f.lower().endswith('.fq') or 
+			#	f.lower().endswith('.fasta') or f.lower().endswith('fastq'))][0]
+			#reads_path_fq = os.path.join(dir_tmp, 'READS/FASTQ', reads_fq)
 			# reads_txt = [f for f in os.listdir(os.path.join(dir_tmp, 'TXT')) if 
 			# 	(f.lower().endswith('.txt'))][0]
 			# reads_path_txt = os.path.join(dir_tmp, 'TXT', reads_txt)

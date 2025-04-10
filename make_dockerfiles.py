@@ -15,7 +15,7 @@ RUN git clone https://github.com/maickrau/GraphAligner.git
 WORKDIR /GraphAligner
 RUN git checkout {}
 RUN git submodule update --init --recursive
-RUN conda env create -f CondaEnvironment.yml
+COPY environment/GraphAligner/CondaEnvironment.yml /GraphAligner/
 RUN echo "source activate GraphAligner" >> ~/.bashrc
 ENV PATH /opt/conda/envs/GraphAligner/bin:$PATH
 RUN apt-get update && apt-get install -y g++ && apt-get install -y make

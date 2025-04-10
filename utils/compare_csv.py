@@ -2,8 +2,8 @@ import os
 import pandas as pd
 
 # Define the paths to the two folders
-folder1 = 'results/position_csv_ga'
-folder2 = 'zip_reads_folder/position_csv'
+folder1 = '/home/users/ignazio.spaccavento/GGBS/results/position_csv_ga'
+folder2 = '/home/users/ignazio.spaccavento/GGBS/zip_reads_folder/position_csv'
 
 # Get the list of CSV files in both folders
 files1 = [f for f in os.listdir(folder1) if f.endswith('.csv')]

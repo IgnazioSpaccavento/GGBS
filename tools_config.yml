@@ -8,26 +8,26 @@ GraphAligner:
   version: b9a6fdc
 
 # # VG Toolkit
-vg:
-  version: a7b0f38
+#vg:
+#  version: a7b0f38
 
 # # AStarix
-astarix:
-  version: 23232ee
+#astarix:
+#  version: 23232ee
 
 # # GWFA
-gwfa:
-  version: 0dd07ff
+#gwfa:
+#  version: 0dd07ff
 
 # # SGA
-SGA:
-  version: 577a3be
+#SGA:
+#  version: 577a3be
 
 # # GEDMAP
-gedmap:
-  version: dc65d53
+#gedmap:
+#  version: dc65d53
 
 # V-ALIGN
-# V-ALIGN:
+#V-ALIGN:
 #   version: e4b59a4
 
