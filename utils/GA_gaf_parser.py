@@ -13,7 +13,7 @@ def main(folder_name):
     i = 0
     # Utilizzo del parametro folder_name al posto del valore hardcoded
     gaf_file = f'/home/users/ignazio.spaccavento/GGBS/results/{folder_name}/GraphAligner/MHC/f_MHC-57_alignments.gaf'
-    csv_file = '/home/users/ignazio.spaccavento/GGBS/results/position_csv_ga/f_100.csv'
+    csv_file = '/home/users/ignazio.spaccavento/GGBS/results/position_csv_ga/d_100.csv'
     
     # Verifica che il file esista
     if not os.path.exists(gaf_file):

@@ -1,28 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import LinearSegmentedColormap
-from scipy.interpolate import griddata
 
 # Leggi il file CSV
-df = pd.read_csv('similarity_scores_density_3.csv')
-
-# Crea una griglia più fine per l'interpolazione
-length_min, length_max = df['seeds_minimizer_length'].min(), df['seeds_minimizer_length'].max()
-window_min, window_max = df['seeds_minimizer_windowsize'].min(), df['seeds_minimizer_windowsize'].max()
-
-# Crea una griglia più densa di punti
-grid_x = np.linspace(length_min, length_max, 200)
-grid_y = np.linspace(window_min, window_max, 200)
-X_fine, Y_fine = np.meshgrid(grid_x, grid_y)
-
-# Prepara i dati per l'interpolazione
-points = np.column_stack((df['seeds_minimizer_length'], df['seeds_minimizer_windowsize']))
-values = df['similarity_score']
-
-# Interpola i dati sulla griglia più fine
-Z_fine = griddata(points, values, (X_fine, Y_fine), method='cubic')
+df = pd.read_csv('similarity_d_2.csv')
 
 # Crea una mappa di colori personalizzata con più sfumature
 colors = [
@@ -38,44 +20,76 @@ colors = [
 n_bins = 256
 custom_cmap = LinearSegmentedColormap.from_list("custom", colors, N=n_bins)
 
-# Crea il grafico 3D
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
+# Crea una griglia dai dati
+x_unique = np.sort(df['seeds_minimizer_length'].unique())
+y_unique = np.sort(df['seeds_minimizer_windowsize'].unique())
+X, Y = np.meshgrid(x_unique, y_unique)
 
-# Plot della superficie con i dati interpolati
-surf = ax.plot_surface(X_fine, Y_fine, Z_fine,
-                      cmap=custom_cmap,
-                      linewidth=0.5,
-                      antialiased=True,
-                      vmin=0,
-                      vmax=1.0)
+# Crea una matrice Z per i valori di similarità
+Z = np.zeros_like(X, dtype=float)
+for i, y_val in enumerate(y_unique):
+    for j, x_val in enumerate(x_unique):
+        mask = (df['seeds_minimizer_length'] == x_val) & (df['seeds_minimizer_windowsize'] == y_val)
+        if mask.any():
+            Z[i, j] = df.loc[mask, 'similarity_score'].iloc[0]
+
+# Crea il grafico
+fig, ax = plt.subplots(figsize=(12, 8))
+
+# Plot usando pcolormesh
+mesh = plt.pcolormesh(X, Y, Z, 
+                     cmap=custom_cmap,
+                     vmin=0,
+                     vmax=1.0,
+                     shading='nearest')
 
 # Personalizza gli assi
-ax.set_xlabel('Minimizer Length')
-ax.set_ylabel('Window Size')
-ax.set_zlabel('Similarity Score')
-
-# Imposta i limiti degli assi
-ax.set_xlim(10, 30)
-ax.set_ylim(10, 40)
-ax.set_zlim(0, 1.0)
+plt.xlabel('Minimizer Length')
+plt.ylabel('Window Size')
 
 # Imposta i tick per l'asse x (Minimizer Length) con numeri interi
-ax.set_xticks(np.arange(10, 31, 2))
-ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
+plt.xticks(np.arange(10, 31, 2))
 
 # Imposta i tick per l'asse y (Window Size) con numeri interi
-ax.set_yticks(np.arange(10, 41, 5))
-ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
-
-# Imposta l'angolo di vista
-ax.view_init(elev=30, azim=-45)
+plt.yticks(np.arange(10, 41, 5))
 
 # Aggiungi una barra dei colori
-plt.colorbar(surf, shrink=0.5, aspect=5)
+plt.colorbar(mesh, label='Similarity Score')
 
 # Imposta il titolo
 plt.title('Similarity Score vs Minimizer Length and Window Size')
+
+# Aggiungi la griglia
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# Crea un'annotazione che sarà aggiornata
+annot = ax.annotate("", xy=(0,0), xytext=(10,10), textcoords="offset points",
+                    bbox=dict(boxstyle="round", fc="w", ec="0.5", alpha=0.9),
+                    ha='center', va='center')
+annot.set_visible(False)
+
+def update_annot(event):
+    if event.inaxes == ax:
+        x, y = event.xdata, event.ydata
+        if x is not None and y is not None:
+            # Trova l'indice più vicino nella griglia
+            x_idx = np.abs(x_unique - x).argmin()
+            y_idx = np.abs(y_unique - y).argmin()
+            
+            # Ottieni il valore dalla matrice Z
+            z = Z[y_idx, x_idx]
+            
+            # Aggiorna il testo dell'annotazione
+            annot.xy = (x_unique[x_idx], y_unique[y_idx])
+            text = f'Minimizer Length: {x_unique[x_idx]:.0f}\nWindow Size: {y_unique[y_idx]:.0f}\nSimilarity Score: {z:.3f}'
+            annot.set_text(text)
+            annot.set_visible(True)
+            fig.canvas.draw_idle()
+    else:
+        annot.set_visible(False)
+        fig.canvas.draw_idle()
+
+fig.canvas.mpl_connect('motion_notify_event', update_annot)
 
 # Mostra il grafico
 plt.show()

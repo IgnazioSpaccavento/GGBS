@@ -7,6 +7,42 @@ import glob
 import datetime
 import re
 import csv
+import pandas as pd
+
+# Sposta qui la definizione delle funzioni che servono per l'estrazione del tempo e memoria
+def extract_time_and_memory(log_file):
+    """Estrae il tempo di esecuzione e la memoria massima dal file di log"""
+    try:
+        with open(log_file, 'r') as f:
+            content = f.read()
+            
+        # Estrai tempo e memoria usando regex
+        time_match = re.search(r'Time: ([\d.]+)', content)
+        memory_match = re.search(r'MAX Memory: (\d+)', content)
+        
+        time = float(time_match.group(1)) if time_match else None
+        memory = int(memory_match.group(1)) if memory_match else None
+        
+        return time, memory
+    except Exception as e:
+        print(f"Errore durante l'estrazione dei dati dal file {log_file}: {e}")
+        return None, None
+
+def add_columns_to_csv(csv_file, time, memory):
+    """Aggiunge le colonne Time e Max Memory al file CSV"""
+    try:
+        # Leggi il CSV esistente
+        df = pd.read_csv(csv_file)
+        
+        # Aggiungi le nuove colonne
+        df['Time (s)'] = time
+        df['Max Memory (KB)'] = memory
+        
+        # Salva il CSV modificato
+        df.to_csv(csv_file, index=False)
+        print(f"Colonne aggiunte con successo al file {csv_file}")
+    except Exception as e:
+        print(f"Errore durante la modifica del file CSV {csv_file}: {e}")
 
 def remove_2025_folders():
     """
@@ -196,9 +232,9 @@ def print_csv_output(data):
         return
     
     print("\n=== DATI CSV ===")
-    print("seeds_minimizer_length,seeds_minimizer_windowsize,seeds_minimizer_density,similarity_score")
+    print("seeds_minimizer_length,seeds_minimizer_windowsize,seeds_minimizer_density,similarity_score,time,memory")
     for entry in data:
-        print(f"{entry['seeds_minimizer_length']},{entry['seeds_minimizer_windowsize']},{entry['seeds_minimizer_density']},{entry['similarity_score']}")
+        print(f"{entry['seeds_minimizer_length']},{entry['seeds_minimizer_windowsize']},{entry['seeds_minimizer_density']},{entry['similarity_score']},{entry.get('time', 'N/A')},{entry.get('memory', 'N/A')}")
     print("===============\n")
 
 def run_pipeline_with_parameters(length, windowsize=30, density=2, results=[]):
@@ -237,25 +273,34 @@ def run_pipeline_with_parameters(length, windowsize=30, density=2, results=[]):
         compare_command = "python3 utils/compare_file_csv.py"
         success, output = execute_command(compare_command, f"Esecuzione di compare_file_csv.py", capture_output=True, show_output=False)
         
+        # Estrai tempo e memoria dal file di log
+        time_file = f'/home/users/ignazio.spaccavento/GGBS/results/{folder_name}/GraphAligner/MHC/f_MHC-57_time.log'
+        time_value, memory_value = extract_time_and_memory(time_file)
+        
         if success:
             # Estrai lo score di similarità
             similarity_score = extract_similarity_score(output)
             if similarity_score is not None:
-                # Stampa solo il risultato in formato CSV
-                print(f"{length},{windowsize},{density},{similarity_score}")
+                # Stampa il risultato in formato CSV, inclusi tempo e memoria
+                if time_value is not None and memory_value is not None:
+                    print(f"{length},{windowsize},{density},{similarity_score},{time_value},{memory_value}")
+                else:
+                    print(f"{length},{windowsize},{density},{similarity_score},N/A,N/A")
                 
                 # Salva i risultati
                 results.append({
                     "seeds_minimizer_length": length,
                     "seeds_minimizer_windowsize": windowsize,
                     "seeds_minimizer_density": density,
-                    "similarity_score": similarity_score
+                    "similarity_score": similarity_score,
+                    "time": time_value,  # Aggiungi tempo e memoria ai risultati
+                    "memory": memory_value
                 })
             else:
-                print(f"{length},{windowsize},{density},N/A")
+                print(f"{length},{windowsize},{density},N/A,N/A,N/A")
                 return False
     else:
-        print(f"{length},{windowsize},{density},ERROR_NO_FOLDER")
+        print(f"{length},{windowsize},{density},ERROR_NO_FOLDER,N/A,N/A")
         return False
     
     return True
@@ -266,7 +311,8 @@ def save_results_to_csv(results, filename="similarity_scores.csv"):
     """
     try:
         with open(filename, 'w', newline='') as csvfile:
-            fieldnames = ['seeds_minimizer_length', 'seeds_minimizer_windowsize', 'seeds_minimizer_density', 'similarity_score']
+            fieldnames = ['seeds_minimizer_length', 'seeds_minimizer_windowsize', 'seeds_minimizer_density', 
+                          'similarity_score', 'time', 'memory']  # Aggiungi le nuove colonne
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
             writer.writeheader()
@@ -278,13 +324,13 @@ def save_results_to_csv(results, filename="similarity_scores.csv"):
         print(f"\nErrore durante il salvataggio dei risultati: {e}")
 
 def main():
-    # Per ogni valore di density (da 2 a 9 inclusi)
-    for density in range(3, 10):  # Da 2 a 9 incluso
+    # Per ogni valore di density (da 2 a 10 inclusi)
+    for density in range(2, 11):
         # Creiamo una lista per salvare i risultati
         results = []
         
         print(f"### DENSITY = {density} ###")
-        print("seeds_minimizer_length,seeds_minimizer_windowsize,seeds_minimizer_density,similarity_score")
+        print("seeds_minimizer_length,seeds_minimizer_windowsize,seeds_minimizer_density,similarity_score,time,memory")
         
         # Prima rimuovi le cartelle contenenti "2025"
         remove_2025_folders()
@@ -296,7 +342,7 @@ def main():
                 success = run_pipeline_with_parameters(length, windowsize=windowsize, density=density, results=results)
                 
                 if not success:
-                    print(f"{length},{windowsize},{density},ERROR")
+                    print(f"{length},{windowsize},{density},ERROR,N/A,N/A")
                 
                 # Rimuovi le cartelle create in questo ciclo prima di passare al successivo
                 remove_2025_folders()

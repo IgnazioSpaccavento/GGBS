@@ -67,6 +67,6 @@ def compare_csv_files(file1_path, file2_path, output_path=None):
 # Example usage
 if __name__ == "__main__":
     # Compare individual files
-    file1 = "/home/users/ignazio.spaccavento/GGBS/results/position_csv_ga/f_100.csv"
-    file2 = "/home/users/ignazio.spaccavento/GGBS/zip_reads_folder/dati_fa_ggbs/short_match/position_csv/f_MHC-57_reads.csv"
+    file1 = "/home/users/ignazio.spaccavento/GGBS/results/position_csv_ga/d_100.csv"
+    file2 = "/home/users/ignazio.spaccavento/GGBS/zip_reads_folder/dati_fa_ggbs/long_match/position_csv/f_1k.csv"
     compare_csv_files(file1, file2)

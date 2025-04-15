@@ -3,7 +3,7 @@ import yaml
 from pathlib import Path
 from datetime import datetime
 
-N_THREADS = 32
+N_THREADS = 8
 
 #version: 3.2 		dovrebbe essere nell'header ma ora non è necessario specificare la versione
 DOCKER_COMPOSE_HEADER = '''\
@@ -36,7 +36,7 @@ COMMAND_TEMPLATE = '        {TIME_MEM} {COMMAND} {LOG} 2> {TIMING}\n'
 TIME_MEM = '/usr/bin/time -f "Time: %e %E, MAX Memory: %M KB"'
 
 COMMANDS = {
-	'GraphAligner': 'GraphAligner -g {GRAPH} -f {READS} -a {OUTPUT} -x vg -t {THREADS} --seeds-minimizer-length 29 --seeds-minimizer-windowsize 15 --seeds-minimizer-density 4',
+	'GraphAligner': 'GraphAligner -g {GRAPH} -f {READS} -a {OUTPUT} -x vg -t {THREADS} --seeds-minimizer-length 12 --seeds-minimizer-windowsize 13 --seeds-minimizer-density 2',
  	#'GraphAligner': 'GraphAligner -g {GRAPH} -f {READS} -a {OUTPUT} -x vg -t {THREADS}',
 	'astarix': 'release/astarix align-optimal -a astar-seeds -g {GRAPH} -q {READS} -t {THREADS} --fixed_trie_depth 1 --seeds_len 10 -G 1 -v 1 -o {OUT_DIR}',
 	'gwfa': './gwf-test {GRAPH} {READS}',
